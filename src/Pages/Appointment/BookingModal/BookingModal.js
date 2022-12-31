@@ -1,9 +1,13 @@
 import { format } from 'date-fns';
-import React from 'react';
+import React, { useContext } from 'react';
+import { toast } from 'react-hot-toast';
+import { AuthContext } from '../../../contexts/AuthProvider';
 
-const BookingModal = ({ treatment, selectedDate, setTreatment }) => {
+const BookingModal = ({ treatment, selectedDate, setTreatment, refetch }) => {
     const { name: treatmentName, slots } = treatment;
     const date = format(selectedDate, 'PPP');
+
+    const { user } = useContext(AuthContext)
 
     const handleBooking = event => {
         event.preventDefault();
@@ -13,7 +17,6 @@ const BookingModal = ({ treatment, selectedDate, setTreatment }) => {
         const email = form.email.value;
         const number = form.number.value;
 
-
         const bookingInfo = {
             appointmentDate: date,
             treatmentName,
@@ -21,10 +24,28 @@ const BookingModal = ({ treatment, selectedDate, setTreatment }) => {
             slot,
             email,
             number
-
         }
         console.log(bookingInfo);
-        setTreatment(null);
+
+        fetch('http://localhost:5000/bookings', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(bookingInfo)
+        })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                if (data.acknowledged) {
+                    setTreatment(null);
+                    toast.success('Booking confirmed');
+                    refetch();
+                }
+                else {
+                    toast.error(data.message);
+                }
+            })
     }
 
     return (
@@ -43,8 +64,8 @@ const BookingModal = ({ treatment, selectedDate, setTreatment }) => {
                                 slots.map((slot, index) => <option key={index} value={slot}>{slot}</option>)
                             }
                         </select>
-                        <input type="text" name="name" placeholder='Your Name' className='input w-full bordered border-primary' />
-                        <input type="email" name="email" placeholder='Email Address' className='input w-full bordered border-primary' />
+                        <input type="text" name="name" defaultValue={user?.displayName} readOnly placeholder='Your Name' className='input w-full bordered border-primary' />
+                        <input type="email" name="email" defaultValue={user?.email} readOnly placeholder='Email Address' className='input w-full bordered border-primary' />
                         <input type="number" name="number" placeholder='Phone Number' className='input w-full bordered border-primary' />
 
                         {/* Name, Email Address will be coming from logged in user info */}

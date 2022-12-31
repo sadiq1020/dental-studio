@@ -20,14 +20,14 @@ const SignUp = () => {
                 console.log(user);
                 toast.success('User Created Successfully')
 
-                navigate('/');
-
                 const userInfo = {
                     displayName: data.name
                 }
 
                 updateUser(userInfo)
-                    .then(() => { })
+                    .then(() => {
+                        navigate('/');
+                    })
                     .catch(error => console.error(error));
             })
             .catch(error => {
